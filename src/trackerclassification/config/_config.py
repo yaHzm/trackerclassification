@@ -1,0 +1,8 @@
+
+
+
+TRAIN_SIZE: int = 1000
+VALIDATION_SIZE: int = 200
+TEST_SIZE: int = 200
+
+NUM_TRACKERS: int = 3

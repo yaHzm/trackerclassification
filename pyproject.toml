@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "trackerclassification"
 version = "0.1.0"
@@ -6,6 +10,16 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "argparse>=1.4.0",
+    "matplotlib>=3.10.7",
+    "numpy>=2.3.3",
     "pydantic>=2.12.0",
     "torch>=2.8.0",
 ]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/trackerclassification"]
+
+
+[project.scripts]
+visualize_sample = "trackerclassification.main:Main.visualize_sample"
+train = "trackerclassification.main:Main.train"
