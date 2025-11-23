@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from ._code import V4TrackerCode
-from ._pose import TrackerPose
 from ._geometry import V4TrackerGeometry
 from ._base import TrackerBase
 

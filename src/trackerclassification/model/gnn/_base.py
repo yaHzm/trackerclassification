@@ -10,10 +10,10 @@ from .._base import ModelBase
 
 
 class GraphNeuralNetworkBase(ModelBase, ABC):
-    def __init__(self, in_dim: int, num_trackers: int, num_leds: int) -> None:
+    def __init__(self, in_dim: int, num_unique_ids: int, num_leds: int) -> None:
         super().__init__()
         self.in_dim = in_dim
-        self.num_trackers = num_trackers
+        self.num_unique_ids = num_unique_ids
         self.num_leds = num_leds
 
     def _ensure_batch(self, data: Data | Batch) -> Batch:
@@ -23,7 +23,7 @@ class GraphNeuralNetworkBase(ModelBase, ABC):
         return nn.ModuleDict({
             "tracker": nn.Sequential(
                 nn.Linear(feat_dim, feat_dim // 2), nn.ReLU(),
-                nn.Linear(feat_dim // 2, self.num_trackers)
+                nn.Linear(feat_dim // 2, self.num_unique_ids)
             ),
             "led": nn.Sequential(
                 nn.Linear(feat_dim, feat_dim // 2), nn.ReLU(),

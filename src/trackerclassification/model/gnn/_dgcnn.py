@@ -23,12 +23,12 @@ class DGCNNModel(GraphNeuralNetworkBase):
     def __init__(
         self,
         in_dim: int,
-        num_trackers: int,
+        num_unique_ids: int,
         num_leds: int,
         k: int = 20,
         hidden_dims: Sequence[int] = (64, 128, 256),
     ) -> None:
-        super().__init__(in_dim=in_dim, num_trackers=num_trackers, num_leds=num_leds)
+        super().__init__(in_dim=in_dim, num_unique_ids=num_unique_ids, num_leds=num_leds)
 
         self.k = k
 

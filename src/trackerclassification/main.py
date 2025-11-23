@@ -8,6 +8,7 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 from .dataset import TrackingDataset
+from .dataset.tracker import TrackerBase
 from .model import ModelBase
 from .training import Trainer
 from .utils.argparsing import ArgsParser
@@ -66,11 +67,7 @@ class Main:
     def _train(cls, args: Args) -> None:
         LOGGER.info("Started training script with args: %s", args)
 
-        ModelClass: Type[ModelBase] = Registry.get("ModelBase", str(args.model))
-        model: ModelBase = args.call(ModelClass)
-        LOGGER.info("Initialized model: %s", model)
-
-        TrackerClass: Type[TrackingDataset] = Registry.get("TrackerBase", str(args.tracker))
+        TrackerClass: Type[TrackerBase] = Registry.get("TrackerBase", str(args.tracker))
         LOGGER.info("Using tracker type: %s", TrackerClass)
 
         train_dataset = TrackingDataset(
@@ -91,6 +88,12 @@ class Main:
         experiment_id = f"{group}/{run_name}"
 
         LOGGER.info("Experiment ID for HF Hub: %s", experiment_id)
+
+        num_unique_ids = TrackerClass.num_unique_ids()
+
+        ModelClass: Type[ModelBase] = Registry.get("ModelBase", str(args.model))
+        model: ModelBase = args.call(ModelClass, num_unique_ids=num_unique_ids)
+        LOGGER.info("Initialized model: %s", model)
 
         trainer = Trainer(
             model=model,
