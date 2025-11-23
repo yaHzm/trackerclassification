@@ -3,7 +3,7 @@ import math
 import numpy as np
 
 from ...config import WIDTH, HEIGHT, HFOV_DEG
-from ...utils.typing import Matrix_Tx7_b, Tensor_Tx7x3_f, Tensor_Tx7x2_f, Matrix_Nx3_f, Matrix_Nx2_f, check_dtypes
+from ...utils.typing import Tensor_TxLx2_f, Tensor_TxLx3_f, Matrix_Nx3_f, Matrix_Nx2_f, Matrix_TxL_b, check_dtypes
 
 
 class CameraIntrinsics:
@@ -130,24 +130,21 @@ class CameraIntrinsics:
 
     @classmethod
     @check_dtypes
-    def project_sample(cls, leds_world: Tensor_Tx7x3_f) -> tuple[Tensor_Tx7x2_f, Matrix_Tx7_b]:
+    def project_sample(cls, leds_world: Tensor_TxLx3_f, L: int) -> tuple[Tensor_TxLx2_f, Matrix_TxL_b]:
         """
         Project a sample of trackers from world coordinates to pixel coordinates on the projection plane. 
 
         Parameters:
-            leds_world (Tensor_Tx7x3_f): An array of shape (T, 7, 3) containing the 3D coordinates of the LEDs in world coordinates for T trackers
+            leds_world (Tensor_TxLx3_f): An array of shape (T, L, 3) containing the 3D coordinates of the L LEDs in world coordinates for T trackers
 
         Returns:
-            Tuple[Tensor_Tx7x2_f, Matrix_Tx7_b]: A tuple containing:
-                - An array of shape (T, 7, 2) containing the 2D pixel coordinates of the LEDs on the projection plane
-                - A boolean array of shape (T, 7) indicating whether each LED is valid (in front of the camera and within the image frame)
-
-        Raises:
-            AssertionError: If leds_world is not of shape (T, 7, 3)
+            Tuple[Tensor_TxLx2_f, Matrix_TxL_b]: A tuple containing:
+                - An array of shape (T, L, 2) containing the 2D pixel coordinates of the LEDs on the projection plane
+                - A boolean array of shape (T, L) indicating whether each LED is valid (in front of the camera and within the image frame)
         """
         T = leds_world.shape[0]
 
-        flattened_leds_world = leds_world.reshape(T * 7, 3)
+        flattened_leds_world = leds_world.reshape(T * L, 3)
         leds_projected, valid_mask = cls._project(flattened_leds_world)
-
-        return leds_projected.reshape(T, 7, 2), valid_mask.reshape(T, 7)
+    
+        return leds_projected.reshape(T, L, 2), valid_mask.reshape(T, L)

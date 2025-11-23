@@ -1,5 +1,4 @@
 from ._constants import *
-from ._args import Args
 
 __all__ = [
     "X_MIN",

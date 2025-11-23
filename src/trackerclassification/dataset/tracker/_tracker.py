@@ -1,13 +1,12 @@
 from __future__ import annotations
-from pydantic import BaseModel
 
-from ._code import TrackerCode
+from ._code import V4TrackerCode
 from ._pose import TrackerPose
-from ._geometry import TrackerGeometry
-from ...utils.typing import Matrix_7x3_f
+from ._geometry import V4TrackerGeometry
+from ._base import TrackerBase
 
 
-class Tracker(BaseModel):
+class V4Tracker(TrackerBase):
     """
     Representation of a version 4 tracker. 
 
@@ -36,33 +35,9 @@ class Tracker(BaseModel):
 
     A tracker is specified by the following attribues:
     Attributes:
-        code (TrackerCode): a 3-digit unique identifier (unique within a sample of trackers)
+        code (V4TrackerCode): a 3-digit unique identifier (unique within a sample of trackers)
         pose (TrackerPose):  rigid transformation (R, t) that places the tracker in 3D space 
         geometry (TrackerGeometry): the 3D coordinates of its LEDs in the tracker's local coordinate system
     """
-    code: TrackerCode
-    pose: TrackerPose
-    geometry: TrackerGeometry
-
-    @property
-    def id(self) -> int:
-        """
-        Get the unique id of the tracker (in [0, 26]) based on its code.
-
-        Returns:
-            int: The unique id of the tracker
-        """
-        return self.code.to_id()
-    
-    def get_leds_world_coords(self) -> Matrix_7x3_f:
-        """
-        Get the 3D coordinates of the LEDs in world coordinates.
-
-        Returns:
-            Matrix_7x3_f: An array of shape (7, 3) containing the 3D coordinates of the LEDs in world coordinates
-        """
-        R, t = self.pose.R, self.pose.t
-        leds_tracker = self.geometry.as_array()
-        leds_tracker_centered = leds_tracker - self.geometry.center    # shift so center is at (0,0,0)
-        leds_world = (R @ leds_tracker_centered.T).T + t
-        return leds_world
+    CodeClass = V4TrackerCode
+    GeometryClass = V4TrackerGeometry

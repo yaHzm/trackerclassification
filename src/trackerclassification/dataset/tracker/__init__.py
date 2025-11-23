@@ -1,7 +1,6 @@
-from ._tracker import Tracker
+from ._tracker import V4Tracker
 from ._pose import TrackerPose
-from ._geometry import TrackerGeometry
-from ._code import TrackerCode
+from ._geometry import V4TrackerGeometry
+from ._code import V4TrackerCode
 from ._camera import CameraIntrinsics
-
-__all__ = ["Tracker", "TrackerPose", "TrackerGeometry", "TrackerCode", "CameraIntrinsics"]
+from ._base import TrackerBase, TrackerGeometryBase, TrackerCodeBase

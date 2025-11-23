@@ -1,9 +1,11 @@
 from __future__ import annotations
-from pydantic import BaseModel, ConfigDict
+from pydantic import ConfigDict
 import numpy as np
 import math
+from typing_extensions import override
 
-from ._code import TrackerCode
+from ._base import TrackerGeometryBase
+from ._code import V4TrackerCode
 from ...config import (
     L, 
     TRAFO_BE, 
@@ -12,7 +14,7 @@ from ...config import (
 from ...utils.typing import Vector_3_f, Matrix_7x3_f, check_dtypes
 
 
-class TrackerGeometry(BaseModel):
+class V4TrackerGeometry(TrackerGeometryBase):
     """
     Representation of a tracker's LED geometry. 
     It defines the 3D coordinates of the LEDs in the tracker's local coordinate system. The local coordinate system is defined 
@@ -43,6 +45,12 @@ class TrackerGeometry(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
+    @override
+    @classmethod
+    def num_leds(cls) -> int:
+        return 7
+
+    @override
     @property
     def center(self) -> Vector_3_f:
         """
@@ -69,12 +77,12 @@ class TrackerGeometry(BaseModel):
     
     @check_dtypes
     @staticmethod
-    def _get_sides(code: TrackerCode, v0: Vector_3_f, v1: Vector_3_f, v2: Vector_3_f) -> tuple[Vector_3_f, Vector_3_f, Vector_3_f, Vector_3_f]:
+    def _get_sides(code: V4TrackerCode, v0: Vector_3_f, v1: Vector_3_f, v2: Vector_3_f) -> tuple[Vector_3_f, Vector_3_f, Vector_3_f, Vector_3_f]:
         """
         Get the 3D coordinates of the LEDs on the sides of the triangle based on the given tracker code.
 
         Parameters:
-            code (TrackerCode): The tracker code defining the arrangement of the LEDs on the sides
+            code (V4TrackerCode): The tracker code defining the arrangement of the LEDs on the sides
             v0 (Vector3f): 3D coordinates of vertex 0
             v1 (Vector3f): 3D coordinates of vertex 1
             v2 (Vector3f): 3D coordinates of vertex 2
@@ -99,17 +107,9 @@ class TrackerGeometry(BaseModel):
                     led_poses.append(led_position)
         return led_poses[0], led_poses[1], led_poses[2], led_poses[3]
 
+    @override
     @classmethod
-    def from_code(cls, code: TrackerCode) -> TrackerGeometry:
-        """
-        Create a TrackerGeometry from a given TrackerCode.
-
-        Parameters:
-            code (TrackerCode): The tracker code defining the arrangement of the LEDs on the sides
-
-        Returns:
-            TrackerGeometry: The corresponding geometry of the tracker
-        """
+    def from_code(cls, code: V4TrackerCode) -> V4TrackerGeometry:
         v0, v1, v2 = cls._get_vertices()
         s0_a, s0_b, s1, s2 = cls._get_sides(code, v0, v1, v2)
         return cls(
@@ -118,6 +118,7 @@ class TrackerGeometry(BaseModel):
             side1=s1, side2=s2
         )
 
+    @override
     def as_array(self) -> Matrix_7x3_f:
         """
         Convert the tracker geometry to a NumPy array.

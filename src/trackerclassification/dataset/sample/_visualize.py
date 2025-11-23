@@ -17,6 +17,9 @@ from ..tracker import CameraIntrinsics
 from ._sample import Sample
 
 
+# TODO: To be documented, no prio
+
+
 class SampleVisualizer:
     def __init__(self):
         self._fig = plt.figure(figsize=(8, 6))
@@ -252,7 +255,7 @@ class SampleVisualizer:
                 self._visualize_triangle_edges()
             # plane + rays in [t3, t4)
             if frame >= t3:
-                self._visualize_projection_plane(z_plane=25.0, with_rays=True)
+                self._visualize_projection_plane(z_plane=z_plane, with_rays=True)
             # projection animation [t5, t6]
             if frame >= t5:
                 frac = (frame - t5) / max(1, (t6 - t5))

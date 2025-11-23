@@ -1,8 +1,14 @@
-from __future__ import annotations
-from pydantic import BaseModel, model_validator
+from __future__ import annotations 
+from typing_extensions import override
+from pydantic import model_validator
+
+import logging
+LOGGER = logging.getLogger(__name__)
+
+from ._base import TrackerCodeBase
 
 
-class TrackerCode(BaseModel):
+class V4TrackerCode(TrackerCodeBase):
     """
     A 3-digit code (c0, c1, c2), with each digit in {0, 1, 2}, specifiying the arrangement of the LEDs of a v4 tracker.
     There are 27 possible codes and codes are unique within a sample of trackers. Those are the possible codes:
@@ -69,15 +75,21 @@ class TrackerCode(BaseModel):
         """
         for name, val in (("c0", self.c0), ("c1", self.c1), ("c2", self.c2)):
             if not (0 <= val <= 2):
-                raise ValueError(f"{name} must be between 0 and 2 (got {val})")
+                LOGGER.error("%s must be between 0 and 2 (got %d)", name, val)
+                raise ValueError(f"{name} must be between 0 and 2")
         return self
+    
+    @override
+    @classmethod
+    def num_unique_ids(cls) -> int:
+        return 27
 
     def as_tuple(self) -> tuple[int, int, int]:
         """
-        Convert the TrackerCode to a tuple representation
+        Convert the V4TrackerCode to a tuple representation
 
         Returns:
-            tuple[int,int,int]: A tuple (c0, c1, c2) representing the TrackerCode
+            tuple[int,int,int]: A tuple (c0, c1, c2) representing the V4TrackerCode
         """
         return (self.c0, self.c1, self.c2)
 
@@ -100,39 +112,19 @@ class TrackerCode(BaseModel):
         elif idx == 2:
             return self.c2
         else:
-            raise IndexError("TrackerCode index must be 0, 1, or 2")
+            raise IndexError("V4TrackerCode index must be 0, 1, or 2")
         
+    @override
     @classmethod
-    def from_id(cls, id: int) -> TrackerCode:
-        """
-        Create a TrackerCode from a unique id in [0, 26] using the mapping:
-        c0 = id // 9
-        c1 = (id // 3) % 3
-        c2 = id % 3
-
-        Parameters:
-            id (int): one-digit id in [0, 26]
-
-        Returns:
-            TrackerCode: The corresponding TrackerCode
-        
-        Raises:
-            ValueError: If id is not in [0, 26]
-        """
-
-        if not (0 <= id < 27):
+    def from_id(cls, id: int) -> V4TrackerCode:
+        if not (0 <= id < cls.num_unique_ids()):
+            LOGGER.error("id must be between 0 and 26 (got %d)", id)
             raise ValueError("id must be between 0 and 26")
         c0 = id // 9
         c1 = (id // 3) % 3
         c2 = id % 3
         return cls(c0=c0, c1=c1, c2=c2)
     
+    @override
     def to_id(self) -> int:
-        """
-        Get the unique id of the tracker (in [0, 26]) based on its code, using the equation:
-        id = c0 * 9 + c1 * 3 + c2
-
-        Returns:
-            int: The unique id of the tracker
-        """
         return self.c0 * 9 + self.c1 * 3 + self.c2

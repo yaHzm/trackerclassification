@@ -1,3 +1,2 @@
 from ._dataset import TrackingDataset
-
-__all__ = ["TrackingDataset"]
+from ._collator import PyGTrackingDataCollator
