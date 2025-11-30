@@ -13,4 +13,4 @@ class ModelArgs(AdditionalArgsBase):
         default=0.2)
     hidden_dims: list[int] = Field(
         description="List of hidden dimensions for each DGCNN layer", 
-        default=[64, 128, 256, 512, 1024, 1024, 512])
+        default=[64, 128, 256])#, 512, 1024, 1024, 512])
