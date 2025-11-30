@@ -95,7 +95,7 @@ class Main:
         model: ModelBase = args.call(ModelClass, num_unique_ids=num_unique_ids)
         LOGGER.info("Initialized model: %s", model)
 
-        data_collator = PyGTrackingDataCollator(k=args.model_args.k)
+        data_collator = PyGTrackingDataCollator()
 
         trainer = Trainer(
             model=model,

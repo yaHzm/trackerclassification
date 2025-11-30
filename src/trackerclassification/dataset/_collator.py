@@ -57,8 +57,6 @@ from ..model.gnn.blocks import full_edge_index
 
 
 class PyGTrackingDataCollator:
-    def __init__(self, k: int) -> None:
-        self._k = k
     """
     Data collator for tracker LED samples.
 
