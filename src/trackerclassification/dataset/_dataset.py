@@ -105,6 +105,11 @@ class TrackingDataset(Dataset):
             X = torch.from_numpy(X)           
             y = torch.from_numpy(y) 
 
+            X = X - X.mean(dim=0, keepdim=True)
+            scale = X.norm(dim=1).max()
+            if scale > 0:
+                X = X / scale
+
             return {
                 "x": X,                        # (N, 2) float32
                 "y": y,                        # (N, 2) int64
@@ -115,6 +120,12 @@ class TrackingDataset(Dataset):
         X, y = sample.get_data()
         X = torch.from_numpy(X)
         y = torch.from_numpy(y) 
+
+        X = X - X.mean(dim=0, keepdim=True)
+        scale = X.norm(dim=1).max()
+        if scale > 0:
+            X = X / scale
+
         return {
             "x": X,                        # (N, 2) float32
             "y": y,                        # (N, 2) int64

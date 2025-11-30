@@ -7,7 +7,7 @@ from huggingface_hub import HfApi, create_repo
 import logging
 LOGGER = logging.getLogger(__name__)
 
-from .dataset import TrackingDataset
+from .dataset import TrackingDataset, PyGTrackingDataCollator
 from .dataset.tracker import TrackerBase
 from .model import ModelBase
 from .training import Trainer
@@ -40,12 +40,12 @@ class Main:
         setup_logging()
         timestamp = time.strftime("%Y%m%d-%H%M%S")
         run_name = (
-            f"{args.model.value}_k{args.model_args.k}"
+            f"{args.model.value}"
             f"_{timestamp}"
         )
         wandb.init(
             project="trackerclassification",
-            group=f"{args.model.value}_k{args.model_args.k}",
+            group=f"{args.model.value}",
             name=run_name,
         )
         if args.huggingface_args.push_to_hub:
@@ -95,12 +95,15 @@ class Main:
         model: ModelBase = args.call(ModelClass, num_unique_ids=num_unique_ids)
         LOGGER.info("Initialized model: %s", model)
 
+        data_collator = PyGTrackingDataCollator(k=args.model_args.k)
+
         trainer = Trainer(
             model=model,
             train_dataset=train_dataset,
             eval_dataset=eval_dataset,
             experiment_id=experiment_id,
             training_args=args.training_args,
+            data_collator=data_collator,
             hf_args=args.huggingface_args
         )
     
@@ -109,7 +112,7 @@ class Main:
 
     @classmethod
     def train(cls) -> None:
-        # tmux new-session -d -s training 'uv run train'
+        # tmux new -s training "uv run train 2>&1 | tee training.log"
         # tmux ls
         # tmux attach -t training
         # ctrl + b -> d 

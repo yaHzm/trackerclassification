@@ -33,6 +33,7 @@ class Trainer:
         eval_dataset: TrackingDataset,
         experiment_id: str,
         training_args: TrainingArgs,
+        data_collator: PyGTrackingDataCollator,
         hf_args: HuggingfaceArgs,
 
         ) -> None:
@@ -43,7 +44,7 @@ class Trainer:
         self._initialize_training_args(training_args)
         self._initialize_metrics()
         self._initialize_callbacks()
-        self._initialize_trainer(model)
+        self._initialize_trainer(model, data_collator)
 
     def _initialize_training_args(self, training_args: TrainingArgs) -> None:
         self._args = TrainingArguments(
@@ -84,13 +85,13 @@ class Trainer:
             self._callbacks.append(push_callback)
             LOGGER.info("Added PushCheckpointsToHubCallback callback for experiment: %s", self._experiment_id)
 
-    def _initialize_trainer(self, model: ModelBase) -> None:
+    def _initialize_trainer(self, model: ModelBase, data_collator: PyGTrackingDataCollator) -> None:
         self._trainer = HFTrainer(
             model=model,
             args=self._args,
             train_dataset=self._train_dataset,
             eval_dataset=self._eval_dataset,
-            data_collator=PyGTrackingDataCollator(),
+            data_collator=data_collator,
             compute_metrics=self._compute_metrics,
             callbacks=self._callbacks,
         )

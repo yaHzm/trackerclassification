@@ -27,7 +27,7 @@ class TrainingArgs(AdditionalArgsBase):
     )
     num_train_epochs: int = Field(
         description="Total number of training epochs to perform",
-        default=100
+        default=50
     )
     logging_steps: int = Field(
         description="Number of steps between logging training metrics",

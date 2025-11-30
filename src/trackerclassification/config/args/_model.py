@@ -8,9 +8,9 @@ class ModelArgs(AdditionalArgsBase):
     in_dim: int = Field(
         description="Input feature dimension per node", 
         default=2)
-    out_channels: int = Field(
-        description="Number of output channels/features per node", 
-        default=64)
-    k: int = Field(
-        description="Number of nearest neighbours for graph construction", 
-        default=3)
+    dropout: float = Field(
+        description="Dropout rate for GNN layers", 
+        default=0.2)
+    hidden_dims: list[int] = Field(
+        description="List of hidden dimensions for each DGCNN layer", 
+        default=[64, 128, 256, 512, 1024, 1024, 512])
