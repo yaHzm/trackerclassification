@@ -7,7 +7,7 @@ from huggingface_hub import HfApi, create_repo
 import logging
 LOGGER = logging.getLogger(__name__)
 
-from .dataset import TrackingDataset, PyGTrackingDataCollator
+from .dataset import TrackingDataset, PyGTrackingDataCollator, PyGTrackingAffinityCollator
 from .dataset.tracker import TrackerBase
 from .model import ModelBase
 from .training import Trainer
@@ -95,7 +95,7 @@ class Main:
         model: ModelBase = args.call(ModelClass, num_unique_ids=num_unique_ids)
         LOGGER.info("Initialized model: %s", model)
 
-        data_collator = PyGTrackingDataCollator()
+        data_collator = PyGTrackingAffinityCollator()
 
         trainer = Trainer(
             model=model,

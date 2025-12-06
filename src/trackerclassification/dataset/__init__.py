@@ -1,2 +1,2 @@
 from ._dataset import TrackingDataset
-from ._collator import PyGTrackingDataCollator
+from ._collator import PyGTrackingDataCollator, PyGTrackingAffinityCollator

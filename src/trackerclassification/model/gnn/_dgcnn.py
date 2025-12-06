@@ -141,3 +141,87 @@ class SingleDGCNNModel(GraphNeuralNetworkBase):
             # "tracker_logits": tracker_logits,
             # "led_logits": led_logits,
         }
+    
+
+
+
+
+
+
+class AffinityDGCNNModel(GraphNeuralNetworkBase):
+    def __init__(
+        self,
+        in_dim: int,
+        num_unique_ids: int,
+        num_leds: int,
+        hidden_dims: Sequence[int],
+        edge_dim: int = 3,
+        edge_hidden_dim: int = 128,
+    ) -> None:
+        super().__init__(in_dim=in_dim, num_unique_ids=num_unique_ids, num_leds=num_leds)
+
+        convs = []
+        last_dim = in_dim
+        for h in hidden_dims:
+            convs.append(EdgeConvBlock(last_dim, edge_dim=edge_dim, out_dim=h))
+            last_dim = h
+        self.convs = nn.ModuleList(convs)
+
+        self.feat_dim = sum(hidden_dims)
+
+        # Edge affinity head: takes [h_i, h_j, |h_i - h_j|] → scalar logit
+        edge_in_dim = 3 * self.feat_dim
+        self.edge_mlp = nn.Sequential(
+            nn.Linear(edge_in_dim, edge_hidden_dim),
+            nn.ReLU(),
+            nn.Linear(edge_hidden_dim, 1),
+        )
+
+    def forward_gnn(self, data: Data | Batch) -> torch.Tensor:
+        batch = self._ensure_batch(data)
+        x = batch.x
+        edge_index = batch.edge_index
+        edge_attr = batch.edge_attr
+
+        feats = []
+        h = x
+        for conv in self.convs:
+            h = conv(h, edge_index, edge_attr)
+            feats.append(h)
+
+        h_cat = torch.cat(feats, dim=-1)  # (N_total, feat_dim)
+        return h_cat
+
+    def forward(
+        self,
+        data: Data | Batch,
+        edge_labels: Optional[torch.Tensor] = None,
+        **kwargs,
+    ):
+        batch = self._ensure_batch(data)
+        h = self.forward_gnn(batch)  # (N_total, feat_dim)
+
+        row, col = batch.edge_index  # (E_total,)
+        h_i = h[row]
+        h_j = h[col]
+        h_diff = torch.abs(h_i - h_j)
+
+        edge_feat = torch.cat([h_i, h_j, h_diff], dim=-1)  # (E_total, 3*feat_dim)
+        edge_logits = self.edge_mlp(edge_feat).squeeze(-1)  # (E_total,)
+
+        loss = None
+        if edge_labels is not None:
+            # edge_labels: (E_total,), 0/1
+            edge_labels = edge_labels.float()
+            # TODO: you can add pos_weight here if you want to rebalance
+            loss = F.binary_cross_entropy_with_logits(edge_logits, edge_labels)
+
+            # later: add size penalty term and combine into total loss
+
+        return {
+            "loss": loss,
+            "edge_logits": edge_logits,
+            "node_embeddings": h,
+        }
+          
+

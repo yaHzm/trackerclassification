@@ -101,3 +101,124 @@ class TrackingMetrics:
             "led_accuracy": led_acc,
             "joint_accuracy": joint_acc,
         }
+    
+
+
+from typing import Dict, Any
+
+import numpy as np
+from transformers import EvalPrediction
+
+
+class AffinityMetrics:
+    """
+    Evaluation metrics for the LED grouping / affinity task.
+
+    Interprets predictions as binary logits for edges:
+      - prediction > threshold ⇒ same tracker (1)
+      - prediction <= threshold ⇒ different tracker (0)
+
+    Expects:
+      - eval_pred.predictions: array-like of shape (E,) or (E, 1)
+      - eval_pred.label_ids:   array-like of shape (E,) or (E, 1)
+        with 0/1 ground truth edge labels.
+    """
+
+    def __init__(self, threshold: float = 0.5) -> None:
+        self.threshold = threshold
+
+    def _extract_logits(self, predictions: Any) -> np.ndarray:
+        """
+        HF can pass predictions as:
+          - a single ndarray
+          - a tuple/list of ndarrays (e.g. (logits,) or (logits, extra_stuff, ...))
+
+        We want a 1D array of logits of shape (E,).
+        """
+        # Case 1: tuple/list → pick first array-like
+        if isinstance(predictions, (tuple, list)):
+            # take the first element that is array-like
+            for p in predictions:
+                arr = np.asarray(p)
+                if arr.ndim >= 1:
+                    logits = arr
+                    break
+            else:
+                raise ValueError(
+                    f"Could not find 1D/2D logits in predictions. "
+                    f"Got shapes: {[np.asarray(p).shape for p in predictions]}"
+                )
+        else:
+            logits = np.asarray(predictions)
+
+        if logits.ndim == 1:
+            return logits
+        if logits.ndim == 2 and logits.shape[1] == 1:
+            return logits[:, 0]
+
+        raise ValueError(
+            f"Predictions must be (E,) or (E, 1), got shape={logits.shape}"
+        )
+
+    def _extract_labels(self, label_ids: Any) -> np.ndarray:
+        """
+        HF can pass labels as:
+          - a single 1D array: (E,)
+          - a single 2D array: (E, 1) or (1, E)
+
+        We want a 1D array of shape (E,) with 0/1 values.
+        """
+        arr = np.asarray(label_ids)
+
+        if arr.ndim == 1:
+            return arr.astype(np.int64)
+
+        if arr.ndim == 2:
+            # (E, 1)
+            if arr.shape[1] == 1:
+                return arr[:, 0].astype(np.int64)
+            # (1, E)
+            if arr.shape[0] == 1:
+                return arr[0, :].astype(np.int64)
+
+        raise ValueError(
+            f"Label ids must be (E,) or (E, 1) / (1, E), got shape={arr.shape}"
+        )
+
+    def compute_metrics(self, eval_pred: EvalPrediction) -> Dict[str, float]:
+        # 1) Extract logits + labels
+        logits = self._extract_logits(eval_pred.predictions)   # (E,)
+        labels = self._extract_labels(eval_pred.label_ids)     # (E,)
+
+        # 2) Convert logits to probabilities and binary predictions
+        probs = 1.0 / (1.0 + np.exp(-logits))  # sigmoid
+        preds = (probs >= self.threshold).astype(np.int64)
+
+        # 3) Basic counts
+        assert preds.shape == labels.shape
+        E = float(labels.size)
+
+        tp = float(np.sum((preds == 1) & (labels == 1)))
+        tn = float(np.sum((preds == 0) & (labels == 0)))
+        fp = float(np.sum((preds == 1) & (labels == 0)))
+        fn = float(np.sum((preds == 0) & (labels == 1)))
+
+        # 4) Metrics with safe divisions
+        accuracy = (tp + tn) / E if E > 0 else 0.0
+
+        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+        recall    = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        if precision + recall > 0:
+            f1 = 2.0 * precision * recall / (precision + recall)
+        else:
+            f1 = 0.0
+
+        pos_rate = float(np.mean(labels == 1)) if E > 0 else 0.0
+
+        return {
+            "edge_accuracy": float(accuracy),
+            "edge_precision": float(precision),
+            "edge_recall": float(recall),
+            "edge_f1": float(f1),
+            "edge_pos_rate": float(pos_rate),
+        }

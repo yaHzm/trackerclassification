@@ -26,7 +26,7 @@ class Args(PydanticArgsBase):
         default=7)
     model: ModelOptions = Field(
         description="Model architecture to use", 
-        default=ModelOptions.SINGLE_DGCNN)
+        default=ModelOptions.ADGCNN)
     model_args: ModelArgs = Field(
         description="Additional arguments for the model", 
         default_factory=ModelArgs)

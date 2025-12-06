@@ -3,6 +3,7 @@ from ._base import ComponentOptionsBase
 
 class ModelOptions(ComponentOptionsBase):
     DGCNN = "DGCNN"
+    ADGCNN = "AffinityDGCNN"
     SINGLE_DGCNN = "SingleDGCNN"
     SAGEConv = "SAGEConv"
     DEEPSET = "DeepSet"

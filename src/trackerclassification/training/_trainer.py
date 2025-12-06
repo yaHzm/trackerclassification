@@ -12,7 +12,7 @@ from ._huggingfacehub import PushCheckpointsToHubCallback
 from ..model import ModelBase
 from ..dataset import TrackingDataset, PyGTrackingDataCollator
 from ..config.args import HuggingfaceArgs, TrainingArgs
-from ._metrics import TrackingMetrics
+from ._metrics import TrackingMetrics, AffinityMetrics
 
 
 class Trainer:
@@ -70,9 +70,15 @@ class Trainer:
         )
 
     def _initialize_metrics(self) -> None:
-        metrics = TrackingMetrics(num_trackers=self._train_dataset._num_trackers, num_leds=7)
+        # metrics = TrackingMetrics(num_trackers=self._train_dataset._num_trackers, num_leds=7)
+        # self._compute_metrics = metrics.compute_metrics
+        # LOGGER.info("Tracking the following metrics: tracker_accuracy, led_accuracy, joint_accuracy")
+    
+        metrics = AffinityMetrics(threshold=0.5)
         self._compute_metrics = metrics.compute_metrics
-        LOGGER.info("Tracking the following metrics: tracker_accuracy, led_accuracy, joint_accuracy")
+        LOGGER.info(
+            "Tracking edge-level metrics: edge_accuracy, edge_precision, edge_recall, edge_f1, edge_pos_rate"
+        )
 
     def _initialize_callbacks(self) -> None:
         self._callbacks: List[TrainerCallback] = []
