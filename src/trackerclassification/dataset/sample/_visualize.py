@@ -1,7 +1,9 @@
 from __future__ import annotations
 import numpy as np
 import matplotlib
-matplotlib.use("Agg")
+
+from trackerclassification.dataset.tracker._base import TrackerBase
+#matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import math
@@ -23,14 +25,14 @@ from ._sample import Sample
 
 
 class SampleVisualizer:
-    def __init__(self):
+    def __init__(self, TrackerClass: type[TrackerBase]) -> None:
         self._fig = plt.figure(figsize=(8, 6))
         self._ax3d = self._fig.add_subplot(1,1,1, projection='3d')
-        self._initialize_sample()
+        self._initialize_sample(TrackerClass)
 
-    def _initialize_sample(self):
+    def _initialize_sample(self, TrackerClass: type[TrackerBase]) -> None:
         rng = np.random.default_rng()
-        self._sample = Sample(3, rng)
+        self._sample = Sample(3, TrackerClass, rng)
         self._cmap = plt.cm.get_cmap("tab20", max(3, 1))
 
     def _visualize_axes(self):
@@ -204,7 +206,7 @@ class SampleVisualizer:
 
         # project all LEDs (T,7,2), valid mask (T,7)
         leds_world = self._sample.get_world_coords()              # (T,7,3)
-        pixels, valid = CameraIntrinsics.project_sample(leds_world)  # (T,7,2), (T,7)
+        pixels, valid = CameraIntrinsics.project_sample(leds_world, 7)  # (T,7,2), (T,7)
 
         pixels_rot = np.empty_like(pixels)
         pixels_rot[..., 0] = HEIGHT - pixels[..., 1]   # u' = HEIGHT - v
@@ -286,11 +288,13 @@ class SampleVisualizer:
             self._visualize_plane_2d_pixels()
             return []
     
-    def _visualize(self):
-        ani = animation.FuncAnimation(self._fig, self._update_frame, frames=130, interval=130, blit=False)
+    def _visualize(self) -> None:
+        anim = animation.FuncAnimation(self._fig, self._update_frame, frames=130, interval=200, blit=False)
+        anim.save("sample_visualization.gif", writer="pillow", fps=20)
+        print("Displaying visualization. Close the window to continue...")
         plt.tight_layout()
         plt.show()
 
     @classmethod
-    def main(cls):
-        cls()._visualize()
+    def main(cls, TrackerClass: type[TrackerBase]) -> None:
+        cls(TrackerClass)._visualize()

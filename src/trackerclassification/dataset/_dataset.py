@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict
+from typing import Any, Dict, Type
 import numpy as np
 from torch.utils.data import Dataset
 import torch
@@ -133,8 +133,8 @@ class TrackingDataset(Dataset):
         }
     
     @classmethod
-    def visualize(cls) -> None:
+    def visualize(cls, TrackerClass: Type[TrackerBase]) -> None:
         """
         Visualize a random sample from the dataset using the SampleVisualizer.
         """
-        SampleVisualizer.main()
+        SampleVisualizer.main(TrackerClass)

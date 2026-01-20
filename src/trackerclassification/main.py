@@ -16,24 +16,24 @@ from .utils.registry import Registry
 from .utils.logging import setup_logging
 from .config.args import Args
 from .config.secrets import HF_TOKEN
+from .utils._plotter import WandBRunPlotter
 
 
 class Main:
     @classmethod
     def run(cls, task: Literal["train", "visualize"]) -> None:
         args: Args = ArgsParser(Args).parse()
-        cls._startup(args)
         try:
             match task:
                 case "train":
+                    cls._startup(args)
                     cls._train(args)
+                    cls._shutdown(args)
                 case "visualize":
-                    cls._visualize()
+                    cls._visualize(args)
         except Exception as e:
             LOGGER.error("An error occurred: %s", e)
             raise
-        finally:
-            cls._shutdown(args)
 
     @classmethod
     def _startup(cls, args: Args) -> None:
@@ -60,8 +60,9 @@ class Main:
         LOGGER.info("Shutdown complete.")
 
     @classmethod
-    def _visualize(cls) -> None:
-        TrackingDataset.visualize()
+    def _visualize(cls, args: Args) -> None:
+        TrackerClass: Type[TrackerBase] = Registry.get("TrackerBase", str(args.tracker))
+        TrackingDataset.visualize(TrackerClass)
 
     @classmethod
     def _train(cls, args: Args) -> None:
@@ -122,3 +123,13 @@ class Main:
     @classmethod
     def visualize(cls) -> None:
         cls.run("visualize")
+
+    @classmethod
+    def wandb_plots(cls) -> None:
+        plotter = WandBRunPlotter(
+            run_path="yannikheizmann-hochschule-offenburg/trackerclassification/runs/lpj3nvan",
+            train_loss_key="train/loss",
+            eval_acc_key="eval/edge_precision",
+            eval_recall_key="eval/edge_recall",
+        )
+        plotter.plot_all()
